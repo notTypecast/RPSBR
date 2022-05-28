@@ -1,6 +1,7 @@
 import pygame
 from src.GameObject import GameObject
 from src.ObjectType import ObjectType
+from math import acos, sqrt, sin, cos, pi, floor
 
 
 class Game:
@@ -19,9 +20,9 @@ class Game:
         GameObject.images[ObjectType.PAPER] = pygame.image.load("img/paper.png")
         GameObject.images[ObjectType.SCISSORS] = pygame.image.load("img/scissors.png")
 
-        GameObject.mass_by_type[ObjectType.ROCK] = 15
+        GameObject.mass_by_type[ObjectType.ROCK] = 4
         GameObject.mass_by_type[ObjectType.PAPER] = 1
-        GameObject.mass_by_type[ObjectType.SCISSORS] = 4
+        GameObject.mass_by_type[ObjectType.SCISSORS] = 2
 
         GameObject.screen_dimensions = (width, height)
 
@@ -36,7 +37,37 @@ class Game:
                     continue
                 if Game.rangeOverlap(game_object.xrange(), game_object_2.xrange()) and \
                         Game.rangeOverlap(game_object.yrange(), game_object_2.yrange()):
-                    # TODO change speed based on collision
+                    ### change speed based on collision ###
+
+                    # masses of objects
+                    m1 = GameObject.mass_by_type[game_object.object_type]
+                    m2 = GameObject.mass_by_type[game_object_2.object_type]
+                    # speeds of objects
+                    v1 = game_object.speed
+                    v2 = game_object_2.speed
+                    # centers of objects
+                    x1 = (game_object.pos[0] + GameObject.image_dimensions[0]/2,
+                          game_object.pos[1] + GameObject.image_dimensions[1]/2)
+                    x2 = (game_object_2.pos[0] + GameObject.image_dimensions[0]/2,
+                          game_object_2.pos[1] + GameObject.image_dimensions[1]/2)
+
+                    dx1x2 = (x1[0] - x2[0], x1[1] - x2[1])
+                    dx2x1 = (x2[0] - x1[0], x2[1] - x1[1])
+
+                    dv1v2 = (v1[0] - v2[0], v1[1] - v2[1])
+                    dv2v1 = (v2[0] - v1[0], v2[1] - v1[1])
+
+                    v1_sclr = 2*m2/(m1+m2)*(dv1v2[0]*dx1x2[0] + dv1v2[1]*dx1x2[1])/(dx1x2[0]**2 + dx1x2[1]**2)
+                    v1_new = (v1[0] - v1_sclr*dx1x2[0], v1[1] - v1_sclr*dx1x2[1])
+
+                    v2_sclr = 2*m1/(m1+m2)*(dv2v1[0]*dx2x1[0] + dv2v1[1]*dx2x1[1])/(dx2x1[0]**2 + dx2x1[1]**2)
+                    v2_new = (v2[0] - v2_sclr*dx2x1[0], v2[1] - v2_sclr*dx2x1[1])
+
+                    game_object.speed = v1_new
+                    game_object_2.speed = v2_new
+
+                    #######################################
+
                     # change object type if types are different
                     if game_object.object_type is not game_object_2.object_type:
                         if Game.beats[game_object.object_type] is game_object_2.object_type:
@@ -70,7 +101,8 @@ class Game:
                 if event.type == pygame.QUIT:
                     self.running = False
                 elif event.type == pygame.KEYDOWN:
-                    paused ^= 1
+                    if event.key == pygame.K_p:
+                        paused ^= 1
 
             self.clock.tick(30)
 
